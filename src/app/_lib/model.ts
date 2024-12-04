@@ -53,3 +53,28 @@ export const updateSessionExpiration = (token: string, newExpiration: number) =>
         WHERE id = ?
     `).run(newExpiration, token)
 }
+
+export const updateLoginAttempts = (login: string, attemps: number) => {
+    sql.prepare(`
+        UPDATE users
+        SET attemps = attemps + 1
+        WHERE login = ?
+    `).run(login)
+}
+
+export const setLoginAttempts = (login:string, attemps:number) => {
+    sql.prepare(`
+        UPDATE users
+        SET attemps = ?
+        WHERE login = ?
+        `).run(attemps,login)
+}
+
+export const updateTime = (login:string, time:number) => {
+    sql.prepare(`
+        UPDATE users
+        SET time = ?
+        WHERE login= ?
+        `).run(time, login)
+}
+

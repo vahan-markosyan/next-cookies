@@ -4,9 +4,11 @@ export interface IUser{
     surname:string;
     login:string
     password:string
+    attemps:number
+    time:number
 }
 
-export type InputUser = Omit<IUser, 'id'>
+export type InputUser = Omit<IUser, 'id'| 'attemps'| 'time'>
 
 export interface ISession{
     id:string

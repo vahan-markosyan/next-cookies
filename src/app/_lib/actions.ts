@@ -1,7 +1,7 @@
 "use server"
 
 import { redirect } from "next/navigation"
-import { createSession, getSessionByToken, getUserByLogin, getUserByToken, insertUser, updateSessionExpiration } from "./model"
+import { createSession, getSessionByToken, getUserByLogin, getUserByToken, insertUser, setLoginAttempts, updateLoginAttempts, updateSessionExpiration, updateTime } from "./model"
 import bcrypt from "bcrypt"
 import { nanoid } from "nanoid"
 import { cookies } from "next/headers"
@@ -44,10 +44,38 @@ export const handleLogin = async(state:IState, form:FormData) => {
     const login = form.get("login") as string
     const password = form.get("password") as string
     const found = getUserByLogin(login)
+    const blockDuration = 1 * 60 * 1000
+    const currentTime = Date.now()
+
+    if (found?.time && currentTime < found.time + blockDuration) {
+        const remainingTime = Math.ceil((found.time + blockDuration - currentTime) / 1000)
+        return {
+            message: `Account is locked. Please try again after ${remainingTime} seconds.`
+        }
+    }
     if(!found) {
-        return {message:"Login is wrong"}
+        return {message:"Wrong credentials"}
     }
     const result = await bcrypt.compare(password, found.password)
+
+
+    let attemps = found.attemps || 0
+
+    if(!result) {
+        attemps++
+        console.log(attemps)
+        updateLoginAttempts(found.login, attemps)
+        if(attemps >= 3){
+            const lockTime = Date.now()
+            updateTime(found.login,lockTime)      
+            setLoginAttempts(found.login, 0)   
+            return { message: "Account locked, please wait 1 minutes" }
+        } 
+    }
+    
+
+    
+
     if(!result) {
         return {message:"wrong credentials"}
     }
